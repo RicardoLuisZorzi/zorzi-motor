@@ -287,6 +287,7 @@ function zmTextoParaHTML(bruto) {
   for (; i < L.length; i++) {
     let l = L[i].trim();
     if (!l) { if (aberto === 'lista' || tabela) fechar(); ultimoP = false; continue; }
+    if (/^(```|~~~)/.test(l)) continue;
     if (l === '---' || /^@quebra\b/i.test(l) || /^p[áa]gina\s+\d+(\s+de\s+\d+)?$/i.test(l)) { fechar(); continue; }
     const limpo = zmSemMarca(l);
     // fecho: o motor monta; aqui só se colhe cidade e data
@@ -384,8 +385,11 @@ function zmEntradaTexto() {
   const fonte = document.getElementById('peca');
   if (!fonte || document.querySelector('.content')) return;
   const c = document.createElement('div'); c.className = 'content';
-  window.ZM_ENTRADA_TEXTO = true;
-  c.innerHTML = zmTextoParaHTML(fonte.textContent || '');
+  const bruto = fonte.textContent || '';
+  if (/<(p|h[1-4]|div|strong|table|br)\b[^>]*>/i.test(bruto)) {
+    // o Gemini colou HTML no bloco de texto: o motor usa o HTML e o normaliza
+    c.innerHTML = bruto; ZM_NORMALIZACOES.push('HTML colado no bloco de texto (o certo é a minuta em texto)');
+  } else { window.ZM_ENTRADA_TEXTO = true; c.innerHTML = zmTextoParaHTML(bruto); }
   fonte.parentNode.insertBefore(c, fonte); fonte.parentNode.removeChild(fonte);
 }
 
