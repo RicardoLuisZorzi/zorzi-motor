@@ -243,6 +243,8 @@ function zmAjustarTabelas() {
 
 // ----- 0-A. Monta a pagina: barra, painel e a lauda-modelo em volta do .content -----
 function zmMontarPagina() {
+  // o esqueleto traz uma faixa vermelha que só some se o motor carregar
+  const avisoFalha = document.getElementById('zm-aviso'); if (avisoFalha) avisoFalha.remove();
   zmMarcarDestaques(document.body);
   if (!document.getElementById('zm-css')) {
     const f = document.createElement('link'); f.rel = 'stylesheet'; f.id = 'zm-fontes';
