@@ -305,7 +305,7 @@ const CIDADE_PADRAO = 'Catanduvas/SC';
 const ASSINANTES = [['ROGÉRIO ZORZI', 'Advogado - OAB/SC 28.529'], ['RICARDO LUÍS ZORZI', 'Advogado - OAB/SC 57.634']];
 const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const NAO_DIVIDIR = 'h1, h2, h3, h4, .titulo-peca, .enderecamento, .autos, .juizo, .despacho, .fecho, .nao-dividir';
-const TITULOS = 'h1, h2, h3, h4, .titulo-peca, .sintese-titulo';
+const TITULOS = 'h1, h2, h3, h4, .titulo-peca, .sintese-titulo, .anexos-titulo';
 
 const est = { cab: null, cabArq: '', cabAlturaMm: CAB_ALTURA_MM, rod: null, rodArq: '', antes: 0, depois: 0,
   transbordo: [], fechos: 0, depoisFecho: false, fechoDigitado: false, sintese: false, semSintese: false,
