@@ -4,12 +4,15 @@
    normalizacao do HTML, paginacao A4, fecho, selo de integridade e exportacao.
    Uso na pagina (o Maximus escreve so isto):
      <body data-modo="colorido">   (ou "pb" ou "word")
-     <div class="content"> ...texto integral da peca... </div>
+     <script type="text/plain" id="peca"> ...minuta aprovada, em texto... </script>
+     (ou, como na V5.1: <div class="content"> ...HTML da peca... </div>)
      <script src="https://cdn.jsdelivr.net/gh/RicardoLuisZorzi/zorzi-motor@main/motor-v5.js"></script>
    ====================================================================== */
-const ZM_VERSAO = 'V5.1';
+const ZM_VERSAO = 'V5.2';
 const ZM_MODO_INICIAL = (function () {
-  const v = ((document.body && document.body.getAttribute('data-modo')) || window.ZM_MODO || 'colorido').toLowerCase();
+  const pc = document.getElementById('peca');
+  let v = ((document.body && document.body.getAttribute('data-modo')) || (pc && pc.getAttribute('data-modo')) || window.ZM_MODO || 'colorido').toLowerCase();
+  if (v === 'rascunho') v = 'word'; if (v === 'ouro') v = 'colorido';
   return v === 'pb' || v === 'word' ? v : 'colorido';
 })();
 const ZM_CSS = "\n/* ===== MATRIZ ZORZI & ZORZI - PADRAO HARVEY V68 / V48 (nao alterar) ===== */\n:root { --texto:#111827; --marca:#161B22; --cinza:#6B7280; --filete:#1F2937; --quadro:#F9FAFB; --quadro-azul: rgba(30,58,95,.07); }\n@page { size: A4; margin: 0; }\n* { box-sizing: border-box; }\nhtml, body { margin: 0; padding: 0; }\nbody { background: #525659; padding: 70px 0 40px; display: flex; flex-direction: column; align-items: center; font-family: 'Inter', Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n\n/* Barra de comandos (nao sai no PDF nem na impressao) */\n.barra { position: fixed; top: 0; left: 0; right: 0; min-height: 56px; background: #161B22; border-bottom: 2px solid #d4af37; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 20px; z-index: 9999; font-family: 'Inter', Arial, sans-serif; }\n.barra-titulo { color: #f8e596; font-size: 9.5pt; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }\n.selo { font-size: 8pt; font-weight: 600; color: #7ee787; background: rgba(255,255,255,.06); padding: 4px 9px; border-radius: 4px; border: 1px solid rgba(255,255,255,.12); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n.selo.aviso { color: #f2cc60; } .selo.erro { color: #ff7b72; }\n.botoes { display: flex; gap: 8px; flex-shrink: 0; }\n.btn { background: linear-gradient(135deg, #d4af37, #b28925); color: #111; border: none; padding: 8px 16px; border-radius: 6px; font-family: 'Inter', Arial, sans-serif; font-size: 9pt; font-weight: 700; cursor: pointer; }\n.btn.sec { background: transparent; color: #f8e596; border: 1px solid #d4af37; }\n.btn:disabled { opacity: .6; cursor: wait; }\n.painel { width: 210mm; max-width: 100%; margin: 0 0 10px; background: #fff8e1; border-left: 4px solid #d4af37; padding: 8px 12px; font-family: 'Inter', Arial, sans-serif; font-size: 9pt; color: #3d3200; display: none; }\n.painel.info { background: #eef6ee; border-left-color: #2e7d32; color: #1b3d1c; }\n.painel.erro { background: #ffecec; border-left-color: #d93025; color: #5c0b06; }\n.painel ul { margin: 4px 0 0 18px; padding: 0; }\n\n/* Lauda A4 (geometria do timbrado Harvey) */\n.page { width: 210mm; height: 297mm; position: relative; overflow: hidden; background: #fff; margin: 0 0 10mm; box-shadow: 0 0 20px rgba(0,0,0,.3); flex-shrink: 0; }\n.cab { position: absolute; top: 0; left: 0; width: 210mm; height: 38.44mm; background: #161B22; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; }\n.cab img { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }\n.cab.com-imagem img { display: block; }\n.cab.com-imagem .reserva { display: none; }\n.corpo { position: absolute; top: 51.44mm; left: 25mm; right: 25mm; bottom: 33.02mm; overflow: hidden; }\n.rod { position: absolute; left: 0; bottom: 6mm; width: 210mm; height: 22.02mm; }\n.rod img { width: 210mm; height: 22.02mm; display: none; }\n.rod.com-imagem img { display: block; }\n.rod.com-imagem .reserva-rod { display: none; }\n\n/* Reserva do cabecalho e do rodape (so aparece se a imagem do GitHub falhar) */\n.reserva { display: flex; flex-direction: column; align-items: center; }\n.placas { position: relative; width: 80px; height: 70px; margin-bottom: 8px; }\n.placa { position: absolute; width: 48px; height: 60px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-size: 44px; line-height: 1; color: #d4af37; border: 1px solid rgba(212,175,55,.55); }\n.placa.tras { top: 8px; left: 22px; opacity: .45; } .placa.frente { top: 0; left: 6px; background: rgba(22,27,34,.85); }\n.marca-nome { font-family: 'Cinzel', serif; font-size: 13.5pt; font-weight: 600; letter-spacing: .16em; color: #d4af37; }\n.marca-sub { font-family: 'Montserrat', Arial, sans-serif; font-size: 5.5pt; font-weight: 300; letter-spacing: .38em; color: #8b949e; margin-top: 3px; text-transform: uppercase; }\n.reserva-rod { margin: 0 auto; width: 160mm; border-top: 1.2mm solid #b8902d; padding-top: 2.2mm; text-align: center; font-size: 8pt; line-height: 1.55; color: #1F2937; }\n.reserva-rod .r1 { font-weight: 700; } .reserva-rod .r2 { font-weight: 700; color: #9C7E24; }\n\n/* ===== CORPO DA PECA ===== */\n.content { font-family: 'Inter', Arial, sans-serif; font-size: 11.5pt; line-height: 1.6; color: var(--texto); text-align: justify; hyphens: none; -webkit-hyphens: none; }\n.content > :first-child { margin-top: 0 !important; }\n.content p { margin: 0 0 12pt; text-indent: 10.58mm; }\n.content strong, .content b { font-weight: 700; }\n.content p.sem-recuo { text-indent: 0; text-align: left; }\n.enderecamento { font-weight: 700; text-transform: uppercase; font-size: 11pt; line-height: 1.625; text-align: center; border-bottom: 1.5pt solid var(--filete); padding-bottom: 9pt; margin: 0 0 12pt; }\n.autos { text-align: right; font-weight: 700; font-size: 10pt; line-height: 1.25; color: var(--marca); margin: 0 0 18pt; }\n.autos:has(+ .juizo) { margin-bottom: 0; }\n.juizo { text-align: right; font-weight: 600; font-size: 9pt; line-height: 1.25; color: var(--cinza); margin: 0 0 18pt; }\n.partes { background: var(--quadro); border-left: 3pt solid var(--marca); padding: 7pt 10pt 7pt 11.3pt; margin: 0 0 18pt; font-size: 10pt; line-height: 1.6; text-align: left; }\n.content .partes p { margin: 0; text-indent: 0; text-align: left; }\n.despacho { height: 73.6pt; }\n.despacho.sem-partes { height: 92pt; }\n.titulo-peca { text-align: center; font-weight: 700; text-transform: uppercase; font-size: 13pt; letter-spacing: .025em; line-height: 1.6; margin: 6pt 0 18pt; }\n.content h2, .secao { font-size: 11.5pt; font-weight: 700; font-variant: small-caps; letter-spacing: .05em; color: var(--texto); text-align: left; line-height: 1.6; background: rgba(184,144,45,.14); border-left: 3pt solid #B8902D; padding: 2pt 8pt 2pt 8pt; margin: 30.4pt 0 12pt 0; }\n.content h3, .subsecao { font-size: 11.5pt; font-weight: 700; color: var(--texto); text-align: left; line-height: 1.6; background: var(--quadro-azul); border-left: 3pt solid var(--marca); padding: 1.5pt 8pt; margin: 24.4pt 0 8pt; }\n\n.fecho-continuacao { margin-top: 0 !important; }\nbody.aperto-1 .content p { margin-bottom: 10pt; } body.aperto-1 .content h2 { margin-top: 24pt; } body.aperto-1 .content h3 { margin-top: 18pt; }\nbody.aperto-2 .content p { margin-bottom: 8pt; } body.aperto-2 .content h2 { margin-top: 18pt; margin-bottom: 10pt; } body.aperto-2 .content h3 { margin-top: 12pt; margin-bottom: 6pt; } body.aperto-2 .sintese, body.aperto-2 .partes, body.aperto-2 .destaque { margin-bottom: 14pt; }\nbody.aperto-3 .content p { margin-bottom: 6pt; } body.aperto-3 .content h2 { margin-top: 12pt; margin-bottom: 8pt; } body.aperto-3 .content h3 { margin-top: 8pt; margin-bottom: 4pt; } body.aperto-3 .content th, body.aperto-3 .content td { padding: 2pt 4pt; } body.aperto-3 .content table { line-height: 1.28; } body.aperto-3 .sintese, body.aperto-3 .partes, body.aperto-3 .destaque { margin-bottom: 10pt; padding-top: 5pt; padding-bottom: 5pt; }\n.page.apertada .content p { margin-bottom: 6pt; }\n.page.apertada .content h2, .page.apertada .secao { margin-top: 12pt; margin-bottom: 8pt; }\n.page.apertada .content h3, .page.apertada .subsecao { margin-top: 8pt; margin-bottom: 4pt; }\n.page.apertada .content th, .page.apertada .content td { padding: 2pt 4pt; }\n.page.apertada .content table { line-height: 1.28; margin-bottom: 6pt; }\n.page.apertada .sintese, .page.apertada .destaque, .page.apertada .partes { padding-top: 5pt; padding-bottom: 5pt; margin-bottom: 10pt; }\n.page.apertada .lista li { margin-bottom: 3pt; }\n.page.apertada .citacao, .page.apertada .content blockquote { margin-bottom: 6pt; }\n.sintese, .destaque, .quadro-anexos { background: var(--quadro-azul); border-left: 3pt solid var(--marca); padding: 7pt 10pt 7pt 11.3pt; margin: 0 0 18pt; text-align: left; }\n.content .sintese p, .content .destaque p, .content .quadro-anexos p { text-indent: 0; text-align: left; margin: 0 0 6pt; }\n.content .sintese > :last-child, .content .destaque > :last-child, .content .quadro-anexos > :last-child { margin-bottom: 0; }\n.sintese-titulo { font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin: 0 0 4pt; }\n.sintese ul, .destaque ul, .quadro-anexos ul { list-style: none; margin: 0; padding: 0; }\n.sintese li, .destaque li, .quadro-anexos li { position: relative; padding-left: 5mm; margin: 0 0 4pt; text-align: left; }\n.sintese li:last-child, .destaque li:last-child, .quadro-anexos li:last-child { margin-bottom: 0; }\n.sintese li::before, .destaque li::before, .quadro-anexos li::before { content: '\\25AA'; position: absolute; left: 0; color: var(--marca); }\n.citacao, .content blockquote { margin: 0 0 12pt 40mm; font-size: 10pt; line-height: 1.25; text-align: justify; }\n.content .citacao p, .content blockquote p { text-indent: 0; margin: 0 0 6pt; }\n.content ul.lista, .content ol.lista { list-style: none; margin: 0 0 12pt; padding: 0; }\n.lista li { margin: 0 0 6pt; padding-left: 17.58mm; text-indent: -7mm; text-align: justify; }\n.content table, .tabela { width: 100%; border-collapse: collapse; table-layout: auto; margin: 0 0 12pt; font-size: 10pt; line-height: 1.4; }\n.content th, .content td { border: .5pt solid #D1D5DB; padding: 4pt 5.5pt; text-align: left; vertical-align: top; }\n.content th { background: var(--marca); color: #fff; font-weight: 700; }\n.content tr.destaque td { background: #F3F4F6; font-weight: 700; }\n.fecho { text-align: center; margin: 24pt 0 0; }\n.content .fecho p { text-indent: 0; text-align: center; margin: 0; }\n.content .fecho .abertura { margin-bottom: 18pt; }\n.content .fecho .data { font-weight: 600; margin-bottom: 30pt; }\n.content .fecho .nome { font-weight: 700; text-transform: uppercase; font-size: 10.5pt; letter-spacing: .1em; color: var(--marca); }\n.content .fecho .oab { text-transform: uppercase; font-size: 9pt; letter-spacing: .1em; color: var(--cinza); margin-top: 1.5pt; }\n.fecho .assinante + .assinante { margin-top: 18pt; }\n.content .fecho.compacto { margin-top: 10pt; }\n.content .fecho.compacto .abertura { margin-bottom: 8pt; }\n.content .fecho.compacto .data { margin-bottom: 14pt; }\n.fecho.compacto .assinante + .assinante { margin-top: 8pt; }\n\n/* ===== MODO PRETO E BRANCO (so o timbre muda; o corpo e o mesmo) ===== */\nbody.pb .barra { background: #111; border-bottom-color: #777; }\nbody.pb .barra-titulo { color: #fff; }\nbody.pb .btn { background: #fff; color: #111; border: 1px solid #ccc; }\nbody.pb .btn.sec { background: transparent; color: #fff; border-color: #888; }\nbody.pb .cab { background: #fff; border-bottom: 1.5px solid #111; }\nbody.pb .cab.com-imagem { border-bottom: none; }\nbody.pb .placa { color: #111; border-color: #111; } body.pb .placa.frente { background: #fff; } body.pb .placa.tras { color: #888; border-color: #888; }\nbody.pb .marca-nome { color: #111; } body.pb .marca-sub { color: #555; }\nbody.pb .reserva-rod { border-top-color: #444; } body.pb .content h2, body.pb .secao { border-left-color: #555; color: #111; background: rgba(0,0,0,.07); } body.pb .content h3, body.pb .subsecao { color: #111; background: rgba(0,0,0,.04); border-left-color: #111; } body.pb .quadro-anexos { border-left-color: #111; background: rgba(0,0,0,.04); } body.pb .sintese { background: rgba(0,0,0,.04); } body.pb .content th { background: #111; } body.pb .sintese, body.pb .destaque, body.pb .partes { border-left-color: #111; } body.pb .reserva-rod .r2 { color: #333; }\n\n/* ===== MODO WORD (sem timbre, sem paginacao, margens de 25 mm) ===== */\nbody.word .barra { background: #185abd; border-bottom-color: #103f82; }\nbody.word .barra-titulo { color: #fff; }\nbody.word .btn { background: #fff; color: #185abd; }\nbody.word .btn.sec { background: transparent; color: #fff; border: 1px solid #fff; }\nbody.word { background: #f0f3f5; }\n.folha-word { width: 210mm; min-height: 297mm; background: #fff; padding: 25mm; box-shadow: 0 10px 30px rgba(0,0,0,.1); }\n\n@media print {\n  body { background: #fff !important; padding: 0 !important; display: block; }\n  .no-print { display: none !important; }\n  .page { margin: 0; box-shadow: none; break-after: page; page-break-after: always; }\n  .folha-word { box-shadow: none; }\n}\n\n.content .quadro-anexos .anexos-titulo { font-weight: 700; margin: 0 0 4pt; text-indent: 0; }\n.quadro-anexos li { padding-left: 0; }\n.quadro-anexos li::before { content: none; }\n.content table.zm-medir th, .content table.zm-medir td { white-space: nowrap; }\n.content table { width: 100%; }\n";
@@ -178,7 +181,7 @@ function zmNumerarSubtitulos(c) {
     t.nodeValue = novo + t.nodeValue;
     if (t.nodeValue !== antes) mudou = true;
   });
-  if (mudou) ZM_NORMALIZACOES.push('subtítulos numerados pelo título (ex.: IV.1, IV.2)');
+  if (mudou) (window.ZM_ENTRADA_TEXTO ? ZM_AJUSTES : ZM_NORMALIZACOES).push('subtítulos numerados pelo título (ex.: IV.1, IV.2)');
 }
 // ----- 0-D. Rol de anexos em quadro, no formato da sintese -----
 function zmQuadroAnexos(c) {
@@ -241,10 +244,156 @@ function zmAjustarTabelas() {
   });
 }
 
+// ----- 0-T. Entrada em TEXTO (como no motor V48 v1.1): <script type="text/plain" id="peca"> -----
+// O Maximus so cola a minuta aprovada; o motor reconhece endereçamento, autos, partes, síntese,
+// títulos (## / ### ou "I –" / "I.1 –"), citações (>), tabelas (|), rol de anexos e fecho.
+function zmEsc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function zmInline(t) {
+  return zmEsc(t)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<u>$1</u>')
+    .replace(/(^|[\s(])\*([^*\s][^*]*?)\*(?=[\s).,;:!?]|$)/g, '$1<em>$2</em>');
+}
+function zmSemMarca(t) { return t.replace(/\*\*|__/g, '').trim(); }
+function zmCaixaAlta(t) {
+  const l = t.replace(/[^A-Za-zÀ-ÿ]/g, ''); if (l.length < 3) return false;
+  const m = l.replace(/[^A-ZÀ-Þ]/g, '').length; return m / l.length > 0.85;
+}
+function zmTextoParaHTML(bruto) {
+  const RE_PARTE = /^(autor(a|es|as)?|r[ée]u?s?|r[ée]s|requerente?s?|requerid[oa]s?|reclamante?s?|reclamad[oa]s?|exequente?s?|executad[oa]s?|embargante?s?|embargad[oa]s?|apelante?s?|apelad[oa]s?|agravante?s?|agravad[oa]s?|impetrante?s?|impetrad[oa]s?|recorrente?s?|recorrid[oa]s?|interessad[oa]s?|parte autora|parte r[ée]|notificante|notificad[oa])\s*:/i;
+  const RE_ROMANO = /^([IVXLCDM]+)\s*[–\-—.]\s+\S/;
+  const RE_SUB = /^(([IVXLCDM]+\.\d+)|(\d+(\.\d+)*))\s*[–\-—.)]\s+\S/;
+  const RE_FECHO = /^(nestes termos|nesses termos|termos em que)/i;
+  const RE_ANEXOS = /^(rol\s+de\s+(documentos\s+)?anexos|rol\s+de\s+documentos|documentos\s+anexos|anexos\s*:)/i;
+  const RE_ITEM = /^([-•▪*]\s+|\d+\s*[).\-–]\s+|anexo\s*\d+|doc(umento)?\.?\s*\d+|[a-z]\)\s+)/i;
+  const RE_ETIQ = /\s*\[(VERIF|CONFERIR|HIP)[^\]]*\]/g;
+  let txt = bruto.replace(/\r/g, '');
+  if (RE_ETIQ.test(txt)) { txt = txt.replace(RE_ETIQ, ''); ZM_AJUSTES.push('etiquetas internas ([VERIF], [CONFERIR], [HIP]) retiradas do texto da peça'); }
+  const L = txt.split('\n').map(function (l) { return l.replace(/\s+$/, ''); });
+  const out = []; let i = 0, fase = 'topo', aberto = null, fecho = null, anexosDepois = [];
+  let tabela = null, ultimoP = false;
+  function fechar() {
+    if (aberto === 'partes') { out.push('</div>', '<div class="despacho"></div>'); fase = 'corpo'; aberto = null; }
+    if (aberto) { destino().push(aberto === 'lista' ? '</ul>' : '</ul></div>'); aberto = null; }
+    if (tabela) {
+      let h = '<table class="tabela">';
+      if (tabela.length) { h += '<thead><tr>' + tabela[0].map(function (c) { return '<th>' + zmInline(c) + '</th>'; }).join('') + '</tr></thead><tbody>'; }
+      tabela.slice(1).forEach(function (r) { h += '<tr>' + r.map(function (c) { return '<td>' + zmInline(c) + '</td>'; }).join('') + '</tr>'; });
+      out.push(h + '</tbody></table>'); tabela = null;
+    }
+    ultimoP = false;
+  }
+  function destino() { return fecho ? anexosDepois : out; }
+  for (; i < L.length; i++) {
+    let l = L[i].trim();
+    if (!l) { if (aberto === 'lista' || tabela) fechar(); ultimoP = false; continue; }
+    if (l === '---' || /^@quebra\b/i.test(l) || /^p[áa]gina\s+\d+(\s+de\s+\d+)?$/i.test(l)) { fechar(); continue; }
+    const limpo = zmSemMarca(l);
+    // fecho: o motor monta; aqui só se colhe cidade e data
+    if (RE_FECHO.test(limpo) || (ZM_RE_DATA.test(limpo) && limpo.length < 80 && fase !== 'topo')) {
+      fechar(); if (!fecho) fecho = { cidade: '', data: '' };
+      const m = limpo.match(ZM_RE_DATA); if (m) { fecho.cidade = m[1].trim(); fecho.data = m[2] + ' de ' + m[3] + ' de ' + m[4]; }
+      continue;
+    }
+    if (fecho && (/OAB\s*\/?\s*[A-Z]{2}/i.test(limpo) || /^advogad[oa]s?\b/i.test(limpo) || (zmCaixaAlta(limpo) && limpo.length < 50 && !RE_ANEXOS.test(limpo)))) continue;
+    // tabela Markdown
+    if (/^\|/.test(l)) {
+      if (aberto) { const t = tabela; tabela = null; fechar(); tabela = t; }
+      const cel = l.replace(/^\||\|$/g, '').split('|').map(function (c) { return c.trim(); });
+      if (cel.every(function (c) { return /^:?-{2,}:?$/.test(c); })) continue;
+      (tabela = tabela || []).push(cel); continue;
+    } else if (tabela) { fechar(); }
+    // títulos
+    let h = null;
+    if (/^#{3,}\s+/.test(l)) h = ['h3', l.replace(/^#+\s+/, '')];
+    else if (/^#{1,2}\s+/.test(l)) h = ['h2', l.replace(/^#+\s+/, '')];
+    else if (fase !== 'topo' && limpo.length < 130 && zmCaixaAlta(limpo) && !/:\s*\S/.test(limpo)) {
+      if (RE_SUB.test(limpo) && !RE_ROMANO.test(limpo)) h = ['h3', limpo];
+      else if (RE_ROMANO.test(limpo)) h = ['h2', limpo];
+    }
+    if (h) {
+      fechar(); fase = 'corpo';
+      out.push('<' + h[0] + '>' + zmInline(zmSemMarca(h[1])) + '</' + h[0] + '>'); continue;
+    }
+    // citação
+    if (/^>\s?/.test(l)) { fechar(); destino().push('<blockquote class="citacao">' + zmInline(l.replace(/^>\s?/, '')) + '</blockquote>'); continue; }
+    // topo da peça: endereçamento, autos, juízo, partes
+    if (fase === 'topo') {
+      if (/^(autos|processo)\b/i.test(limpo) && limpo.length < 220) {
+        const m = limpo.match(/^(.*?)\s*(\(.*\))\s*$/);
+        out.push('<div class="autos">' + zmInline(m ? m[1] : limpo) + '</div>');
+        if (m) out.push('<div class="juizo">' + zmInline(m[2]) + '</div>');
+        continue;
+      }
+      if (RE_PARTE.test(limpo)) {
+        const k = limpo.indexOf(':');
+        if (aberto !== 'partes') { fechar(); out.push('<div class="partes">'); aberto = 'partes'; }
+        out.push('<p><strong>' + zmEsc(limpo.slice(0, k + 1)) + '</strong>' + zmInline(limpo.slice(k + 1)) + '</p>');
+        continue;
+      }
+      if (aberto === 'partes') { out.push('</div>'); aberto = null; out.push('<div class="despacho"></div>'); fase = 'corpo'; }
+      else if (!out.length && zmCaixaAlta(limpo)) { out.push('<div class="enderecamento">' + zmInline(limpo) + '</div>'); continue; }
+      else if (out.length && /^<div class="enderecamento">/.test(out[out.length - 1]) && zmCaixaAlta(limpo) && !/^(autos|processo)/i.test(limpo)) {
+        out[out.length - 1] = out[out.length - 1].replace('</div>', ' ' + zmInline(limpo) + '</div>'); continue;
+      }
+      else if (out.length && /class="(autos|juizo)"/.test(out[out.length - 1]) && limpo.length < 160 && !/[.;]$/.test(limpo)) { out.push('<div class="juizo">' + zmInline(limpo) + '</div>'); continue; }
+      else if (out.length) { out.push('<div class="despacho"></div>'); fase = 'corpo'; }
+      else fase = 'corpo';
+    }
+    // síntese
+    if (/^(quadro\s+)?s[íi]ntese\b/i.test(limpo) && limpo.length < 90) {
+      fechar(); out.push('<div class="sintese"><p class="sintese-titulo">' + zmInline(limpo.replace(/:$/, '')) + '</p><ul>'); aberto = 'sintese'; continue;
+    }
+    if (aberto === 'sintese') {
+      if (/^[-•▪*]\s+/.test(l) || /^\**[^:]{2,80}:\**\s+\S/.test(l)) { out.push('<li>' + zmInline(l.replace(/^[-•▪*]\s+/, '')) + '</li>'); continue; }
+      fechar();
+    }
+    // rol de anexos
+    if (RE_ANEXOS.test(limpo) && limpo.length < 260) {
+      fechar(); destino().push('<div class="quadro-anexos"><p class="anexos-titulo">' + zmInline(limpo.replace(/:$/, '')) + '</p><ul>');
+      aberto = 'anexos'; continue;
+    }
+    if (aberto === 'anexos') {
+      if (RE_ITEM.test(limpo)) { destino().push('<li>' + zmInline(l.replace(/^[-•▪*]\s+/, '')) + '</li>'); continue; }
+      destino().push('</ul></div>'); aberto = null;
+    }
+    // lista simples
+    if (/^[-•▪]\s+/.test(l)) {
+      if (aberto !== 'lista') { fechar(); destino().push('<ul class="lista">'); aberto = 'lista'; }
+      destino().push('<li>' + zmInline(l.replace(/^[-•▪]\s+/, '')) + '</li>'); continue;
+    }
+    if (aberto === 'lista') fechar();
+    // título da peça sozinho na linha (antes da 1ª seção)
+    if (zmCaixaAlta(limpo) && limpo.length < 90 && !/[.:;,]$/.test(limpo) && !out.some(function (x) { return /^<h2>/.test(x); }) && out.length) {
+      destino().push('<div class="titulo-peca">' + zmInline(limpo) + '</div>'); continue;
+    }
+    // parágrafo (linha quebrada no meio da frase continua o parágrafo anterior)
+    const d = destino();
+    if (ultimoP && /^[a-zà-ú(]/.test(limpo) && d.length && /<\/p>$/.test(d[d.length - 1]) && !/[.:;!?"”)]<\/p>$/.test(d[d.length - 1])) {
+      d[d.length - 1] = d[d.length - 1].replace(/<\/p>$/, ' ' + zmInline(l) + '</p>');
+    } else d.push('<p>' + zmInline(l) + '</p>');
+    ultimoP = true;
+  }
+  fechar();
+  if (aberto === 'anexos') out.push('</ul></div>');
+  if (anexosDepois.length) { out.push.apply(out, anexosDepois); ZM_NORMALIZACOES.push('texto digitado depois do fecho levado para antes dele'); }
+  out.push('<div class="fecho" data-cidade="' + zmEsc((fecho && fecho.cidade) || 'Catanduvas/SC') + '" data-data="' + zmEsc((fecho && fecho.data) || '') + '"></div>');
+  return out.join('\n');
+}
+function zmEntradaTexto() {
+  const fonte = document.getElementById('peca');
+  if (!fonte || document.querySelector('.content')) return;
+  const c = document.createElement('div'); c.className = 'content';
+  window.ZM_ENTRADA_TEXTO = true;
+  c.innerHTML = zmTextoParaHTML(fonte.textContent || '');
+  fonte.parentNode.insertBefore(c, fonte); fonte.parentNode.removeChild(fonte);
+}
+
 // ----- 0-A. Monta a pagina: barra, painel e a lauda-modelo em volta do .content -----
 function zmMontarPagina() {
   // o esqueleto traz uma faixa vermelha que só some se o motor carregar
   const avisoFalha = document.getElementById('zm-aviso'); if (avisoFalha) avisoFalha.remove();
+  zmEntradaTexto();
   zmMarcarDestaques(document.body);
   if (!document.getElementById('zm-css')) {
     const f = document.createElement('link'); f.rel = 'stylesheet'; f.id = 'zm-fontes';
